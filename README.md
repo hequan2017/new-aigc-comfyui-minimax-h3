@@ -10,8 +10,26 @@ ComfyStudio 是一个基于 **Go + Vue3** 的 ComfyUI 多卡管理平台：管�
 
 ---
 
+## 界面预览
+
+<p align="center">
+  <img src="docs/screenshots/projects.png" alt="项目列表" width="49%"/>
+  <img src="docs/screenshots/project-detail.png" alt="项目详情" width="49%"/>
+  <br/>
+  <img src="docs/screenshots/project-editor.png" alt="项目编辑" width="49%"/>
+  <img src="docs/screenshots/tasks.png" alt="任务列表" width="49%"/>
+  <br/>
+  <img src="docs/screenshots/instances.png" alt="实例管理" width="49%"/>
+  <img src="docs/screenshots/settings.png" alt="平台设置" width="49%"/>
+  <br/>
+  <img src="docs/screenshots/dashboard.png" alt="总览" width="49%"/>
+</p>
+
+---
+
 ## 目录
 
+- [界面预览](#界面预览)
 - [核心特性](#核心特性)
 - [系统架构](#系统架构)
 - [功能清单](#功能清单)
