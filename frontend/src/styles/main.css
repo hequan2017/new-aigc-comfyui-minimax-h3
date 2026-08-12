@@ -1,0 +1,297 @@
+/* ============================================================
+   Apple 风格设计系统（对标 apple.com 官网）
+   ============================================================ */
+:root {
+  --bg: #f5f5f7;
+  --bg-deep: #ffffff;
+  --card: rgba(255, 255, 255, 0.72);
+  --card-solid: #ffffff;
+  --text: #1d1d1f;
+  --text-secondary: #6e6e73;
+  --text-tertiary: #86868b;
+
+  /* 多彩系统色（iOS 风格饱和色） */
+  --blue: #0071e3;
+  --indigo: #5e5ce6;
+  --purple: #bf5af2;
+  --pink: #ff375f;
+  --teal: #40c8e0;
+  --green: #30d158;
+  --orange: #ff9f0a;
+  --red: #ff453a;
+  --yellow: #ffd60a;
+  --mint: #63e6e2;
+
+  /* 主色 = Apple 蓝 */
+  --accent: #0071e3;
+  --accent-hover: #0077ed;
+  --accent-soft: rgba(0, 113, 227, 0.09);
+  --link-blue: #06c;
+
+  /* 渐变（按钮/图标/强调，收敛为 Apple 蓝系） */
+  --gradient: linear-gradient(180deg, #0071e3 0%, #0077ed 100%);
+  --grad-blue: linear-gradient(180deg, #0071e3, #0077ed);
+  --grad-purple: linear-gradient(135deg, #bf5af2, #ff375f);
+  --grad-teal: linear-gradient(135deg, #40c8e0, #30d158);
+  --grad-sunset: linear-gradient(135deg, #ff9f0a, #ff375f);
+  --grad-rainbow: linear-gradient(115deg, #0a84ff 0%, #bf5af2 35%, #ff375f 65%, #ff9f0a 100%);
+  --grad-hero-text: linear-gradient(180deg, #1d1d1f 0%, #6e6e73 100%);
+
+  --border: rgba(0, 0, 0, 0.08);
+  --hover-bg: rgba(0, 0, 0, 0.04);
+  --chip-bg: rgba(0, 0, 0, 0.05);
+  --radius-lg: 18px;
+  --radius-md: 14px;
+  --radius-sm: 8px;
+  --shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+  --shadow-hover: 0 8px 40px rgba(0, 0, 0, 0.1);
+  --nav-h: 48px;
+  --font: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text',
+    'Helvetica Neue', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+}
+
+/* 深色主题：data-theme="dark" 覆盖变量 */
+[data-theme="dark"] {
+  --bg: #000000;
+  --bg-deep: #1c1c1e;
+  --card: rgba(28, 28, 30, 0.72);
+  --card-solid: #1c1c1e;
+  --text: #f5f5f7;
+  --text-secondary: #aeaeb2;
+  --text-tertiary: #6d6d72;
+  --border: rgba(255, 255, 255, 0.12);
+  --hover-bg: rgba(255, 255, 255, 0.07);
+  --chip-bg: rgba(255, 255, 255, 0.08);
+  --accent-soft: rgba(10, 132, 255, 0.2);
+  --shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+  --shadow-hover: 0 8px 40px rgba(0, 0, 0, 0.55);
+  --link-blue: #2997ff;
+  --grad-hero-text: linear-gradient(180deg, #f5f5f7 0%, #6e6e73 100%);
+}
+[data-theme="dark"] body::before {
+  background:
+    radial-gradient(620px 320px at 12% -8%, rgba(10, 132, 255, 0.16), transparent 60%),
+    radial-gradient(540px 300px at 88% -12%, rgba(191, 90, 242, 0.14), transparent 60%),
+    radial-gradient(560px 300px at 72% 6%, rgba(255, 55, 95, 0.08), transparent 60%);
+}
+[data-theme="dark"] ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.22); }
+[data-theme="dark"] input, [data-theme="dark"] textarea, [data-theme="dark"] select {
+  background: rgba(255, 255, 255, 0.06); color: var(--text); border-color: var(--border);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body { height: 100%; }
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  font-size: 15px;
+  line-height: 1.5;
+  min-width: 320px;
+}
+
+button, input, textarea, select { -webkit-tap-highlight-color: transparent; }
+button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible {
+  outline: 3px solid rgba(0, 113, 227, 0.28);
+  outline-offset: 2px;
+}
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.18); border-radius: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+
+/* 背景光晕（苹果官网式柔光） */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(720px 380px at 50% -12%, rgba(0, 113, 227, 0.07), transparent 60%),
+    radial-gradient(620px 320px at 85% -8%, rgba(10, 132, 255, 0.06), transparent 55%);
+}
+
+/* ---------- 通用组件 ---------- */
+.card {
+  background: var(--card);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  padding: 24px;
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+/* 按钮（Apple 官网胶囊） */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: none;
+  border-radius: 980px;
+  padding: 10px 24px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: var(--font);
+  cursor: pointer;
+  transition: all 0.25s ease;
+  background: var(--gradient);
+  color: #fff;
+}
+@media (hover: hover) { .btn:hover { filter: brightness(1.1); box-shadow: 0 4px 16px rgba(0, 113, 227, 0.35); } }
+.btn:active { transform: scale(0.97); }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+
+.btn-secondary {
+  background: rgba(0, 0, 0, 0.06);
+  color: var(--text);
+}
+.btn-secondary:hover { background: rgba(0, 0, 0, 0.1); }
+
+.btn-ghost {
+  background: transparent;
+  color: var(--link-blue);
+}
+.btn-ghost:hover { background: var(--accent-soft); }
+
+.btn-danger {
+  background: var(--red);
+}
+.btn-danger:hover { background: #e03227; }
+
+.btn-sm { padding: 6px 15px; font-size: 13px; }
+.btn-lg { padding: 14px 34px; font-size: 17px; }
+
+/* 链接（Apple 官网 "了解更多 ›"） */
+a.link-more, .link-more {
+  color: var(--link-blue);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  transition: text-decoration 0.15s;
+}
+a.link-more:hover, .link-more:hover { text-decoration: underline; }
+
+/* 渐变文字 */
+.gradient-text {
+  background: var(--grad-hero-text);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+/* 标签徽章 */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 980px;
+  font-size: 12px;
+  font-weight: 600;
+  background: rgba(0, 0, 0, 0.06);
+  color: var(--text-secondary);
+}
+.badge .dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: currentColor;
+}
+.badge-green { background: rgba(48, 209, 88, 0.15); color: #1a7f37; }
+.badge-blue { background: rgba(0, 113, 227, 0.12); color: var(--blue); }
+.badge-purple { background: rgba(191, 90, 242, 0.14); color: var(--purple); }
+.badge-teal { background: rgba(64, 200, 224, 0.16); color: #0a8fa8; }
+.badge-orange { background: rgba(255, 159, 10, 0.16); color: #b76b00; }
+.badge-red { background: rgba(255, 69, 58, 0.13); color: var(--red); }
+.badge-gray { background: rgba(0, 0, 0, 0.06); color: var(--text-secondary); }
+
+/* 进度条 */
+.progress-track {
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.07);
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: var(--gradient);
+  transition: width 0.4s ease;
+}
+
+/* 表单 */
+.field { margin-bottom: 18px; }
+.field label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 7px;
+}
+.input, .textarea, select.input {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  font-size: 14px;
+  font-family: var(--font);
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.input:focus, .textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.15);
+}
+.textarea { resize: vertical; min-height: 90px; }
+
+/* 页面（Apple 官网标题排版） */
+.page {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 28px 24px 60px;
+}
+.page-title {
+  font-size: clamp(34px, 5vw, 48px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: 6px;
+}
+.page-sub {
+  color: var(--text-secondary);
+  font-size: 15px;
+  margin-bottom: 28px;
+}
+
+/* 空态 */
+.empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-tertiary);
+}
+.empty .empty-icon { font-size: 44px; margin-bottom: 12px; opacity: 0.5; }
+
+/* 动画 */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.fade-up { animation: fadeUp 0.45s ease both; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+.pulse { animation: pulse 1.6s ease-in-out infinite; }
+
+@media (max-width: 640px) {
+  .page { padding: 24px 16px 48px; }
+  .card { padding: 18px; }
+  .btn-lg { padding: 12px 26px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}

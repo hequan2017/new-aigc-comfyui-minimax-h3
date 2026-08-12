@@ -1,0 +1,29 @@
+# ComfyUI Console · Console 容器部署（comfyui 实例为宿主机裸进程，由 console 经 SSH 管理）
+# 适用: 算力服务器 (8×NVIDIA L40)
+# ComfyUI: 宿主机 /opt/comfyUI 目录, bash start-multi-gpu.sh {start|stop|restart|status}
+# 调度: console 通过 SSH (config.yaml remote) 在宿主机上启停 comfyui-gpu{N} 裸进程
+name: comfyui-console
+
+services:
+  console:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: comfyui-console:latest
+    container_name: console
+    restart: unless-stopped
+    ports:
+      - "18000:18000"
+    environment:
+      TZ: Asia/Shanghai
+    volumes:
+      # 配置（只读）
+      - /opt/comfyui-console/config.yaml:/app/config.yaml:ro
+      # SQLite 数据库 / 上传素材
+      - /opt/comfyui-console/data:/opt/comfyui-console/data
+      # ComfyUI 数据目录（上传素材、输出文件与宿主机共享路径）
+      - /opt/comfyUI:/opt/comfyUI
+      # GPU 监控（nvidia-smi + libnvidia-ml）
+      - /usr/bin/nvidia-smi:/usr/bin/nvidia-smi:ro
+      # SSH 私钥（console 经 SSH 密钥在宿主执行 docker / SFTP 读写算力节点）
+      - /opt/comfyui-console/ssh_key:/app/ssh_key:ro

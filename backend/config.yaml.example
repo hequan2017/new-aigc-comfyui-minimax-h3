@@ -1,0 +1,34 @@
+server:
+  addr: "0.0.0.0:18000"
+
+comfy:
+  comfy_dir: /opt/comfyUI
+  base_port: 8188
+  gpu_count: 8
+  reserve_vram: 6
+  force_fp16: true
+  enable_manager: true
+  # 实例调度方式: ssh(默认, 算力节点裸进程) / docker(compose 容器) / local(本机裸进程)
+  mode: ssh
+  container_prefix: comfyui-gpu
+  network: comfyui-console_default
+
+storage:
+  db_path: /opt/comfyui-console/data/console.db
+  data_dir: /opt/comfyui-console/data
+
+gpu:
+  nvidia_smi: /usr/bin/nvidia-smi
+  monitor_interval_seconds: 3
+
+# SSH 远程算力节点（单机 docker 部署：console 经 SSH 密钥在宿主执行 docker / SFTP 读写）
+# 注意: 复制本文件为 config.yaml 后填写真实主机与认证信息，切勿提交密钥到仓库
+remote:
+  host: "127.0.0.1"
+  port: 22
+  user: root
+  password: ""
+  private_key: ""
+
+# 任务模拟模式：无 GPU 环境下开启（true），任务将按模板参考耗时模拟进度推进直至成功，不连接 ComfyUI
+simulate: false

@@ -1,0 +1,24 @@
+
+frontend/node_modules/*
+frontend/dist/*
+backend/console.exe
+backend/console-linux-amd64
+backend/dev-error.log
+backend/dev.log
+frontend/dev.log
+frontend/dev-error.log
+backend/internal/static/dist/*
+.spec-workflow/templates/*
+/short-drama-tmp/
+
+# 敏感文件：本地真实配置 / 密钥 / 数据（仅提交 config.yaml.example 模板）
+backend/config.yaml
+*.key
+*.pem
+.env
+.env.*
+*.db
+*.sqlite
+*.sqlite3
+backend/data/
+

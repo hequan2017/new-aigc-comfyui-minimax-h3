@@ -1,0 +1,8 @@
+# 无 GPU 覆盖文件：docker compose -f docker-compose.yml -f docker-compose.nogpu.yml up -d
+# 清空 console 容器的 GPU 设备声明（模拟/CPU 测试环境用）
+services:
+  console:
+    deploy:
+      resources:
+        reservations:
+          devices: []
