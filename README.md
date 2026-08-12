@@ -189,7 +189,7 @@ sequenceDiagram
 | **SQLite** | 任务 / 模板 / 项目 / 设置持久化 | `data/console.db`（volume 挂载） | console 启动时自动迁移建表 |
 | **ComfyUI ×8** | MiniMax H3 推理（t2v/i2v/首尾帧/ref2v），每卡一实例 | 宿主机 `/opt/comfyUI`（裸进程，端口 8188~8195） | 本仓库 `comfyui/` 目录（含 MiniMax H3 实现） |
 | **conda 环境 `comfyenv`** | ComfyUI 运行依赖（torch 等，镜像内不装，复用宿主） | 宿主机 `/opt/miniconda3/envs/comfyenv` | `deploy.sh` 自动增量 `pip install -r comfyui/requirements.txt`（幂等） |
-| **MiniMax H3 模型权重** | DiT 模型（t2v / i2v / ref2v + VAE/文本编码器） | 宿主机 `/opt/comfyUI/models/` 下对应子目录 | 手动下载放置（见下方「模型放置」） |
+| **MiniMax H3 模型权重** | DiT 模型 ×2 + Qwen3-VL 文本编码器 + 视频/音频 VAE（共 5 个文件） | 宿主机 `/opt/comfyUI/models/` 下对应子目录（见「H3 模型部署」） | 手动下载放置 |
 | **start-multi-gpu.sh** | 宿主机多卡实例启停脚本（start/stop/restart/status） | 宿主机 `/opt/comfyUI/start-multi-gpu.sh` | 仓库外维护，console 经 SSH 调用 |
 | **SSH 凭证** | console → 宿主机 免密管理（私钥优先于密码） | `config.yaml` 的 `remote` 段 + `/opt/comfyui-console/ssh_key` | 自行生成/配置 |
 | **火山引擎 Ark API Key** | 文生文（剧本）/ 文生图（分镜）/ TTS（配音） | 平台设置页（存 SQLite，打码回显） | 火山引擎控制台申请 |
@@ -222,25 +222,79 @@ conda create -n comfyenv python=3.11 -y
 
 依赖安装由 `deploy.sh` 自动完成（`pip install -r comfyui/requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple`）。
 
-#### 3. 放置 ComfyUI 与模型
+#### 3. 部署 ComfyUI
 
-将 `comfyui/` 目录部署到 `/opt/comfyUI`，并按 MiniMax H3 工作流要求放置模型权重：
+将 `comfyui/` 目录部署为 `/opt/comfyUI`：
 
-```
-/opt/comfyUI/models/
-├── diffusion_models/      # MiniMax H3 DiT 权重（t2v / i2v / ref2v）
-├── vae/                   # 视频 VAE
-├── text_encoders/         # 文本编码器（H3 tokenizer 等）
-└── checkpoints/           # （如需）
+```bash
+mkdir -p /opt/comfyUI
+cp -r comfyui/* /opt/comfyUI/
 ```
 
-> 模型文件较大（数十 GB 级），部署到 `/data1` 或大容量盘后调整 `config.yaml` 的 `comfy.comfy_dir`。
+**依赖安装**：ComfyUI 依赖（`requirements.txt`：torch / torchaudio / transformers / comfy-kitchen 等）安装到 conda 环境 `comfyenv`，由 `deploy.sh` 自动增量安装（幂等）：
 
-#### 4. 准备多卡启动脚本
+```bash
+# 也可手动安装
+/opt/miniconda3/envs/comfyenv/bin/python -m pip install -r comfyui/requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
+```
+
+**目录结构**（`comfy_dir` 必须与 `config.yaml` 的 `comfy.comfy_dir` 一致）：
+
+```
+/opt/comfyUI/
+├── main.py                   # 入口（复用宿主 conda python）
+├── comfy/                    # 核心（含 ldm/minimax/ 与 text_encoders/minimax.py）
+├── comfy_extras/
+│   └── nodes_minimax_h3.py   # H3 节点：EmptyLatentAV / ImageToVideo / ReferenceToVideo / SigmaShift
+├── models/                   # 模型权重（见下）
+├── start-multi-gpu.sh        # 多卡实例启停脚本（console 经 SSH 调用）
+└── input/ output/ temp/      # 运行数据目录（8 实例共享 input，独立 output_workers/gpuN）
+```
+
+> `extra_model_paths.yaml`（可选）：如需把模型放在其他盘符/目录，可复制 `extra_model_paths.yaml.example` 配置 `base_path` 指到大容量磁盘，避免占用系统盘。
+
+#### 4. MiniMax H3 模型部署
+
+平台共需 **5 个权重文件**（工作流模板按以下文件名加载，缺一不可）：
+
+| 权重文件 | 放置目录 | 加载器 | 用途 |
+|---|---|---|---|
+| `minimax_h3_fl2va_bf16.safetensors` | `models/diffusion_models/` | UNETLoader（fp8_e4m3fn） | 文生视频 / 图生视频 / 首尾帧 DiT |
+| `minimax_h3_ref2va_bf16.safetensors` | `models/diffusion_models/` | UNETLoader（fp8_e4m3fn） | 参考视频（ref2v）DiT |
+| `qwen3vl_32b_minimax_h3_bf16.safetensors` | `models/text_encoders/` | CLIPLoader（type=minimax） | Qwen3-VL-32B 文本/视觉编码器（截断 50 层） |
+| `minimax_h3_video_vae_fp16.safetensors` | `models/vae/` | VAELoader | 视频 VAE（图像/视频编解码） |
+| `minimax_h3_audio_vae_fp32.safetensors` | `models/vae/` | VAELoader | 音频 VAE（音轨编解码，32kHz） |
+
+```bash
+mkdir -p /opt/comfyUI/models/{diffusion_models,text_encoders,vae}
+# 将 5 个权重文件放入对应目录（文件名严格一致，fp8 权重加载时自动量化）
+```
+
+**模型说明**：
+
+- **H3 是联合视频+音频生成模型**：一次采样同时产出视频与音轨（音画同步），无需外部 TTS；`Empty MiniMax H3 AV Latent` 创建 24fps 视频 + 40fps 音频联合隐空间
+- **时长网格**：帧数对齐 `17k+5` 网格（124 帧 ≈ 5 秒），训练范围为 124~362 帧（5~15 秒），更长未测试
+- **画布约束**：短边 768px、面积上限 768×1344，宽高按 32px 对齐；ref2v 参考图短边最大 2048px
+- **ref2v 参考类型**：参考图（最多 9 张）/ 参考视频（最多 3 个，2~15 秒，24fps）/ 参考音频（最多 3 段），提示词用 `<Picture i>` / `<Video k>` / `<Audio j>` 标签引用
+- **采样参数**：euler + simple，`MiniMaxH3SigmaShift` 设置 video shift 12.0 / audio shift 3.0（本平台模板已内置）
+- **显存**：fp8 量化加载下单实例约需 **22~24GB 显存**（8×L40 96GB 可并行 8 实例），`comfy.reserve_vram` 控制每实例预留
+
+**工作流模板与模型映射**（`backend/internal/service/templates/`，启动时种子化进 SQLite）：
+
+| 模板 | code | 使用的 DiT | 必填素材 |
+|---|---|---|---|
+| 文生视频 | `minimax_h3_t2v` | `fl2va` | 无 |
+| 图生视频 | `minimax_h3_i2v` | `fl2va` | 首帧图 |
+| 首尾帧视频 | `minimax_h3_first_last` | `fl2va` | 首帧 + 尾帧图 |
+| 参考视频 | `minimax_h3_ref2v` | `ref2va` | 提示词（参考图/视频/音频可选） |
+
+> 验证模型就绪：`cd /opt/comfyUI && bash start-multi-gpu.sh start` 后访问 `http://<节点IP>:8188/system_stats`；或平台创建 t2v 任务，观察节点级进度推进。
+
+#### 5. 准备多卡启动脚本
 
 宿主机 `/opt/comfyUI/` 下准备 `start-multi-gpu.sh`（管理 8 个实例：每卡一个裸进程，端口 8188~8195，`--reserve-vram 6`，仅 GPU0 启用 Manager）。console 的实例管理/一键启停功能通过 SSH 调用它。
 
-#### 5. 生成配置
+#### 6. 生成配置
 
 ```bash
 cp backend/config.yaml.example backend/config.yaml
@@ -260,7 +314,7 @@ comfy:
 simulate: false
 ```
 
-#### 6. 一键部署（Docker 容器）
+#### 7. 一键部署（Docker 容器）
 
 ```bash
 bash deploy.sh               # git pull → conda 依赖 → 构建镜像 → 启动 → 健康检查
@@ -281,7 +335,7 @@ bash deploy.sh --rebuild     # 强制重建镜像（默认每次发版已强制�
 
 部署完成后浏览器访问 `http://<服务器IP>:18000`。
 
-#### 7. 验证部署
+#### 8. 验证部署
 
 ```bash
 # 平台健康
