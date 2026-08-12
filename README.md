@@ -190,7 +190,7 @@ sequenceDiagram
 | **ComfyUI ×8** | MiniMax H3 推理（t2v/i2v/首尾帧/ref2v），每卡一实例 | 宿主机 `/opt/comfyUI`（裸进程，端口 8188~8195） | 本仓库 `comfyui/` 目录（含 MiniMax H3 实现） |
 | **conda 环境 `comfyenv`** | ComfyUI 运行依赖（torch 等，镜像内不装，复用宿主） | 宿主机 `/opt/miniconda3/envs/comfyenv` | `deploy.sh` 自动增量 `pip install -r comfyui/requirements.txt`（幂等） |
 | **MiniMax H3 模型权重** | DiT 模型 ×2 + Qwen3-VL 文本编码器 + 视频/音频 VAE（共 5 个文件） | 宿主机 `/opt/comfyUI/models/` 下对应子目录（见「H3 模型部署」） | 手动下载放置 |
-| **start-multi-gpu.sh** | 宿主机多卡实例启停脚本（start/stop/restart/status） | 宿主机 `/opt/comfyUI/start-multi-gpu.sh` | 仓库外维护，console 经 SSH 调用 |
+| **start-multi-gpu.sh** | 宿主机多卡实例启停脚本（start/stop/restart/status） | 宿主机 `/opt/comfyUI/start-multi-gpu.sh` | 仓库 `shell/start-multi-gpu.sh`（部署前按实际路径/卡数修改） |
 | **SSH 凭证** | console → 宿主机 免密管理（私钥优先于密码） | `config.yaml` 的 `remote` 段 + `/opt/comfyui-console/ssh_key` | 自行生成/配置 |
 | **火山引擎 Ark API Key** | 文生文（剧本）/ 文生图（分镜）/ TTS（配音） | 平台设置页（存 SQLite，打码回显） | 火山引擎控制台申请 |
 | **NVIDIA 驱动 + nvidia-container-toolkit** | GPU 监控（nvidia-smi）+ 容器 GPU 访问（CDI） | 宿主机 | 官方驱动 + `nvidia-ctk cdi generate` |
@@ -247,7 +247,7 @@ cp -r comfyui/* /opt/comfyUI/
 ├── comfy_extras/
 │   └── nodes_minimax_h3.py   # H3 节点：EmptyLatentAV / ImageToVideo / ReferenceToVideo / SigmaShift
 ├── models/                   # 模型权重（见下）
-├── start-multi-gpu.sh        # 多卡实例启停脚本（console 经 SSH 调用）
+├── start-multi-gpu.sh        # 多卡实例启停脚本（仓库 shell/ 提供，console 经 SSH 调用）
 └── input/ output/ temp/      # 运行数据目录（8 实例共享 input，独立 output_workers/gpuN）
 ```
 
@@ -290,9 +290,18 @@ mkdir -p /opt/comfyUI/models/{diffusion_models,text_encoders,vae}
 
 > 验证模型就绪：`cd /opt/comfyUI && bash start-multi-gpu.sh start` 后访问 `http://<节点IP>:8188/system_stats`；或平台创建 t2v 任务，观察节点级进度推进。
 
-#### 5. 准备多卡启动脚本
+#### 5. 部署多卡启动脚本
 
-宿主机 `/opt/comfyUI/` 下准备 `start-multi-gpu.sh`（管理 8 个实例：每卡一个裸进程，端口 8188~8195，`--reserve-vram 6`，仅 GPU0 启用 Manager）。console 的实例管理/一键启停功能通过 SSH 调用它。
+宿主机 `/opt/comfyUI/` 下需要 `start-multi-gpu.sh`（管理 N 个实例：每卡一个裸进程，端口 8188~8195，`--reserve-vram 6`，仅 GPU0 启用 Manager）。console 的实例管理/一键启停功能通过 SSH 调用它。
+
+仓库已内置该脚本（`shell/start-multi-gpu.sh`），部署到宿主机：
+
+```bash
+scp shell/start-multi-gpu.sh root@<服务器IP>:/opt/comfyUI/start-multi-gpu.sh
+ssh root@<服务器IP> "chmod +x /opt/comfyUI/start-multi-gpu.sh"
+```
+
+> 部署前按实际环境修改脚本头部：`COMFY_DIR` / `CONDA_SH` / `GPU_COUNT` / `RESERVE_VRAM`（脚本默认 `/opt/comfyUI` + 8 卡 + 预留 6GB，与仓库脱敏约定一致）。
 
 #### 6. 生成配置
 
@@ -442,6 +451,7 @@ ssh root@<server> "cd /opt/comfyui-console && bash -c 'nohup ./console-linux-amd
 │       └── stores/app.js
 ├── Dockerfile                     # console 镜像（前端 embed + Go 单二进制）
 ├── docker-compose.yml             # console 容器（comfyui 为宿主机裸进程）
+├── shell/start-multi-gpu.sh       # ComfyUI 多卡实例启停脚本（部署到宿主机使用）
 └── deploy.sh                      # 一键部署（git pull → conda → 镜像 → 启动 → 健康检查）
 ```
 
