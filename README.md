@@ -36,7 +36,7 @@
 ```
 
 - **部署服务器**：单机部署——`console`（前端 + Go 后端 + SQLite）跑在 Docker 容器，8 个 ComfyUI 实例为宿主机裸进程，由 console 经 SSH 密钥（`config.yaml` 的 `remote` 段）启停与读写，不再使用 compose 管理 comfyui 容器。
-- **代码仓库**：`/opt/comfyui-console`（gitee，`deploy.sh` 会自动 `git pull`）；**数据/配置**：`/opt/comfyui-console/`；**ComfyUI**：`/opt/comfyUI`（模型、input、output）；**conda 环境**：`/opt/miniconda3/envs/comfyenv`。
+- **代码仓库**：`/opt/comfyui-console`（git 仓库，`deploy.sh` 会自动 `git pull`）；**数据/配置**：`/opt/comfyui-console/`；**ComfyUI**：`/opt/comfyUI`（模型、input、output）；**conda 环境**：`/opt/miniconda3/envs/comfyenv`。
 - **ComfyUI 实例**：由 `/opt/comfyUI/start-multi-gpu.sh` 管理（每卡一个实例，端口 8188~8195，仅 GPU0 启用 Manager），console 通过 SSH 调用其 start/stop/restart。
 
 ## 创建 → 展示全链路数据流
@@ -180,7 +180,7 @@
 ## 部署
 
 > **部署服务器**: `<服务器IP>`（8×L40，console 容器 + 8×ComfyUI 宿主机裸进程）
-> · 代码目录 `/opt/comfyui-console`（git 仓库 gitee，docker build context）
+> · 代码目录 `/opt/comfyui-console`（git 仓库，docker build context）
 > · 数据/配置目录 `/opt/comfyui-console/`（volume 挂载）
 > · ComfyUI 目录 `/opt/comfyUI/`（`start-multi-gpu.sh` 管理 8 实例）· conda 环境 `/opt/miniconda3/envs/comfyenv`
 
@@ -322,7 +322,7 @@ ssh root@<server> "cd /opt/comfyui-console && bash -c 'nohup ./console-linux-amd
 - 必填素材缺失校验 ✅
 - 实例调度排序（队列短优先 → 显存大优先）✅
 
-**端到端验证**（部署服务器 106，真实 8×L40 + ComfyUI）：
+**端到端验证**（部署服务器，真实 8×L40 + ComfyUI）：
 - 4 个模板任务全部创建成功，工作流渲染后成功提交至 ComfyUI，并 success 生成 MP4 ✅
 - 自动调度到不同 GPU 并行执行，节点级进度（`progress_state`）正常推进 ✅
 - 生成 MP4（1280×704 / h264 / ~5.2s），`/api/media` 返回正确元数据 ✅
@@ -360,3 +360,7 @@ ssh root@<server> "cd /opt/comfyui-console && bash -c 'nohup ./console-linux-amd
 **参考**：
 - [方舟 图片生成 API（Seedream 5.0）](https://www.volcengine.com/docs/82379/1541523)
 - [方舟 图片生成教程（参考图生图 / 多图融合）](https://www.volcengine.com/docs/82379/1824121)
+
+## 开源协议
+
+[MIT License](LICENSE) © [hequan2017](https://github.com/hequan2017)
