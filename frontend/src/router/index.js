@@ -17,6 +17,7 @@ const routes = [
 ]
 
 export default createRouter({
-  history: createWebHistory(),
+  // BASE_URL 本地构建默认为 '/'，GitHub Pages 子路径部署时由 vite --base 注入
+  history: createWebHistory(import.meta.env.BASE_URL),
   routes
 })
