@@ -186,7 +186,7 @@ sequenceDiagram
 本仓库内置 GitHub Actions 工作流（`.github/workflows/deploy-pages.yml`）：**推送到 `main` 后自动执行前端测试 → `vite build` → 发布静态站点到 GitHub Pages**，全程使用内置 `GITHUB_TOKEN` 部署，**无需配置任何仓库 Secret**。
 
 - 访问地址：`https://<用户名>.github.io/<仓库名>/`
-- 首次部署时工作流会用 `GITHUB_TOKEN` 自动开启 Pages 并将 Source 设为 GitHub Actions；若组织策略限制了 Token 权限导致自动开启失败，再到仓库 **Settings → Pages** 手动将 Source 设为 **GitHub Actions**
+- 首次部署前需一次性放开 Token 权限：仓库 **Settings → Actions → General → Workflow permissions** 选 **Read and write permissions**，之后工作流会用 `GITHUB_TOKEN` 自动开启 Pages 并设 Source 为 GitHub Actions；若不想放开权限，也可在 **Settings → Pages** 手动将 Source 设为 **GitHub Actions**，再 Re-run 工作流
 - 构建时自动注入子路径 base（`--base=/<仓库名>/`）并生成 `404.html` 兜底 SPA 深链路由，fork 改名后依然可用
 - Pages 版本仅为**前端静态预览**：`/api` 请求在 Pages 上无后端响应，完整功能请按下方步骤本地部署
 
