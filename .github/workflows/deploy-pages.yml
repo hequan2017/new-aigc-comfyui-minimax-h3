@@ -31,6 +31,12 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
+      # 仓库未开启 Pages 时用 GITHUB_TOKEN 自动开启（Source 设为 GitHub Actions），已开启则跳过
+      - name: Enable GitHub Pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
       - name: Install dependencies
         working-directory: frontend
         run: npm ci
